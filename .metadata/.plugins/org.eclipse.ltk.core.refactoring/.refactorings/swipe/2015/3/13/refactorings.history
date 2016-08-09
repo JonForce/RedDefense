@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename local variable &apos;comboSwipeDelay&apos; in &apos;com.jbs.swipe.levels.arcade.ArcadeTutorialState.buildFithTipScene()&apos; to &apos;preSwipeDelay&apos;&#x0D;&#x0A;- Original project: &apos;swipe&apos;&#x0D;&#x0A;- Original element: &apos;com.jbs.swipe.levels.arcade.ArcadeTutorialState.buildFithTipScene().comboSwipeDelay&apos;&#x0D;&#x0A;- Renamed element: &apos;comboSwipeDelay&apos;&#x0D;&#x0A;- Update references to refactored element" description="Rename local variable &apos;comboSwipeDelay&apos;" id="org.eclipse.jdt.ui.rename.local.variable" input="/src&lt;com.jbs.swipe.levels.arcade{ArcadeTutorialState.java[ArcadeTutorialState~buildFithTipScene@comboSwipeDelay!8718!8846!8765!8779!F!67108880!false" name="preSwipeDelay" references="true" stamp="1427066092119" version="1.0"/>
+</session>

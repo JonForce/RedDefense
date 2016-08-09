@@ -1,0 +1,22 @@
+1425830503796	Rename type 'TileSwiper'
+1425833557796	Rename local variable 'tiles'
+1425834579577	Rename type 'Event'
+1425836194035	Rename type 'SwipeListener'
+1425836214689	Rename type 'TileListener'
+1425836332640	Rename type 'TileStateListener'
+1425840559500	Rename field 'swipeListener'
+1425842298132	Rename field 'lastUpdateTime'
+1425842943326	Rename field 'activeSwipes'
+1425843026917	Rename local variable 'i'
+1425843141792	Rename method 'getDirection'
+1425843278590	Delete element
+1426011772530	Delete element
+1426102010775	Rename method 'swipe'
+1426178990237	Rename method 'createFollowingTile'
+1426179885766	Move compilation unit
+1426198289741	Rename type 'CrossFormation'
+1426198304565	Rename type 'TileHailstorm'
+1426198346722	Rename field 'tiles'
+1426265555979	Rename local variable 'yOffset'
+1426265563948	Rename local variable 'spaRcingY'
+1426370239707	Rename local variable 'advanceTileState'

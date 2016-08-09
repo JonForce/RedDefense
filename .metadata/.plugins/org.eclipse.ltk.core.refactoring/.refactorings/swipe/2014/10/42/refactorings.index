@@ -1,0 +1,6 @@
+1413138503002	Rename method 'clearCallbacks'
+1413144670668	Rename local variable 'scale'
+1413492290964	Rename field 'infinity'
+1413492316390	Rename field 'INFINITY'
+1413492322593	Rename field 'SWIPE_DISTANCE'
+1413582332573	Encapsulate field 'background'

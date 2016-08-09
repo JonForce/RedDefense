@@ -1,0 +1,96 @@
+package com.saucy.game.map.entities.turrets;
+
+import java.util.ArrayList;
+
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.saucy.framework.io.InputProxy;
+import com.saucy.framework.util.pathfinding.Index;
+import com.saucy.game.Assets;
+import com.saucy.game.map.Position;
+import com.saucy.game.map.Tile;
+import com.saucy.game.map.entities.Entity;
+import com.saucy.game.map.entities.enemies.Enemy;
+
+public abstract class Turret extends Entity {
+	
+	private final TurretAssets assets;
+	private final Position view;
+	private Index position;
+	private Position target;
+	private long lastShotTime;
+	private float rotation;
+	
+	abstract TurretAssets createTurretAssets(Assets allAssets);
+	abstract TurretProperties properties();
+	
+	public abstract void fire(float fromX, float fromY, float toX, float toY, float inaccuracy);
+	public abstract float random(float max);
+	
+	public Turret(Assets assets, Position view) {
+		this.assets = createTurretAssets(assets);
+		this.view = view;
+		this.position = Index.of(0, 0);
+	}
+	
+	public void setPosition(int gridX, int gridY) {
+		position = Index.of(gridX, gridY);
+	}
+	
+	@Override
+	public void renderTo(SpriteBatch batch) {
+		super.centerRender(batch, assets.bottom, view, 0);
+		//super.centerRender(batch, assets.top, view, rotation);
+	}
+
+	@Override
+	public void updateWith(InputProxy input) { }
+	
+	
+	public void setTarget(Position p) {
+		target = p;
+	}
+	
+	public void updateWith(ArrayList<Enemy> enemies) {
+//		boolean foundTarget = false;
+//		for (Enemy e : enemies) {
+//			if (e.distanceTo(this) < properties().range) {
+//				target = e;
+//				if (e.y() - y() > 0)
+//					rotation = (float)Math.toDegrees(Math.acos((target.x() - x()) / this.distanceTo(e))) - 90;
+//				else
+//					rotation = 270 - (float)Math.toDegrees(Math.acos((target.x() - x()) / this.distanceTo(e)));
+//				foundTarget = true;
+//			}
+//		}
+//		if (!foundTarget)
+//			target = null;
+		if (target.y() - y() > 0)
+			rotation = (float)Math.toDegrees(Math.acos((target.x() - x()) / this.distanceTo(target))) - 90;
+		else
+			rotation = 270 - (float)Math.toDegrees(Math.acos((target.x() - x()) / this.distanceTo(target)));
+		
+		if (System.currentTimeMillis() - lastShotTime > properties().firePeriod && target != null) {
+			final float
+				dx = target.x() - x(),
+				dy = target.y() - y(),
+				barrelRotation = (float)Math.PI / 2 - (float)Math.toRadians(rotation),
+				signX = (dx > 0)? 1 : -1,
+				signY = (dy > 0)? 1 : -1,
+				barrelEndX = x() + (float)Math.abs(Math.cos(barrelRotation) * 1) * signX,
+				barrelEndY = y() + (float)Math.abs(Math.sin(barrelRotation) * 1) * signY,
+				angle = random(properties().inaccuracy) - properties().inaccuracy / 2;
+			fire(barrelEndX, barrelEndY, target.x(), target.y(), angle);
+			lastShotTime = System.currentTimeMillis();
+		}
+	}
+	
+	@Override
+	public float rotation() {
+		return rotation;
+	}
+	
+	@Override
+	public float x() { return position.x * Tile.WIDTH + Tile.WIDTH; }
+	@Override
+	public float y() { return position.y * Tile.HEIGHT + Tile.HEIGHT / 2f; }
+}

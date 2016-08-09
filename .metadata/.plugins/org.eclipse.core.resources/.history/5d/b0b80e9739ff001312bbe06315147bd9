@@ -1,0 +1,13 @@
+package com.jbs.swipe.gui;
+
+import com.badlogic.gdx.assets.AssetManager;
+
+public class Font {
+	
+	private Texture source;
+	
+	public Font(AssetManager assets) {
+		
+	}
+	
+}

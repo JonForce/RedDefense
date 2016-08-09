@@ -1,0 +1,340 @@
+package com.saucy.game;
+
+import java.util.Random;
+
+import aurelienribon.tweenengine.Tween;
+import aurelienribon.tweenengine.TweenManager;
+
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Preferences;
+import com.badlogic.gdx.assets.AssetManager;
+import com.badlogic.gdx.files.FileHandle;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.Vector2;
+import com.saucy.framework.control.Application;
+import com.saucy.framework.io.AudioProxy;
+import com.saucy.framework.rendering.Graphic;
+import com.saucy.framework.rendering.Renderable;
+import com.saucy.game.gui.GraphicAccessor;
+import com.saucy.game.levels.LevelState;
+import com.saucy.game.map.entities.turrets.Turret;
+import com.saucy.game.map.entities.turrets.TurretProperties;
+import com.saucy.game.shop.ShopState;
+import com.saucy.game.states.LoadingState;
+import com.saucy.game.states.MainMenuState;
+import com.saucy.game.survival.SurvivalLevel;
+
+public class Game extends Application {
+	
+	public static final boolean DEVELOPER_MODE = false, RESET_MODE = false;
+	
+	public static Game game;
+	public final boolean IS_STRICT = true, USE_TOUCH_CONTROLS;
+	public static final int LEVEL_WIDTH = 30, LEVEL_HEIGHT = 30;
+	
+	private FileHandle
+		PATH_TO_ASSETS,
+		BACKGROUND_MUSIC_SOURCE;
+	
+	protected AudioProxy audioProxy;
+	protected Random random;
+	protected Assets assets;
+	
+	/** The utility for easily creating and updating animations. */
+	private TweenManager tweenManager;
+	/** The interface for saving User data. */
+	private User user;
+	/** The interface for saving Game settings. */
+	private Settings settings;
+	
+	private LoadingState loadingState;
+	private MainMenuState mainMenuState;
+	private ShopState shopState;
+	
+	private long
+		lastRenderTime;
+	private boolean
+		created = false; // True when the Game's resources have been initialized.
+	
+	public Game(int virtualWidth, int virtualHeight, boolean useTouchControls) {
+		super(virtualWidth, virtualHeight);
+		System.out.println("Poop?")
+		this.USE_TOUCH_CONTROLS = useTouchControls;
+		game=this; //game should be a singleton so we don't have to pass it around everywhere.
+		if (IS_STRICT)
+			System.out.println("Warning! Game IS_STRICT");
+		
+		assets = new Assets();
+		assets.init();
+	}
+	
+	/** Reset the Game to it's MainMenuState. Throws RuntimeException if the Game
+	 * is already in it's MainMenuState. */
+	public void returnToMainMenu() {
+		if (this.applicationState() == mainMenuState())
+			throw new RuntimeException("Cannot returnToMainMenu if the Game is already in it's MainMenuState.");
+		
+		this.setState(mainMenuState());
+	}
+	
+	/** Play the Game's background music. */
+	public void playBackgroundMusic(boolean looped) {
+//		audio().playMusic(BACKGROUND_MUSIC_SOURCE, looped);
+	}
+	
+	/** Stop the Game's background music. */
+	public void stopBackgroundMusic() {
+//		audio().stopMusic(BACKGROUND_MUSIC_SOURCE);
+	}
+	
+	/** Retrieve the Texture from the Game's AssetManager. Throws RuntimeException if
+	 * the Game has not yet been created with it's create() method. */
+	public Texture getTexture(String textureSource) {
+		if (this.IS_STRICT)
+			// Assert that the Game has been created with it's create() method.
+			if (!this.isCreated())
+				throw new RuntimeException("Error in Game.getTexture() : Cannot get texture before Game is created.");
+		// Retrieve the texture from the Game's assets.
+		return assets.get(textureSource, Texture.class);
+	}
+	
+	/** @return the Game's Assets. This is the interface for directly using all the Game's loaded Assets. */
+	public final Assets assets() {
+		return this.assets;
+	}
+	
+	/** @return the Game's AudioProxy. This is the interface for using the Game's loaded Audio. */
+	public final AudioProxy audio() {
+		return this.audioProxy;
+	}
+	
+	/** @return the Game's psuedo-Random number generator. */
+	public final Random random() {
+		return this.random;
+	}
+	
+	/** Set the Game's state to it's paused state and stop the background music.
+	 * Throws a RuntimeException if the Game is already in it's PausedState. */
+	@Override
+	public final void pause() {
+		// If we're in a Level, pause it.
+		if (this.applicationState() instanceof LevelState && this.isCreated())
+			((LevelState) applicationState()).pause();
+	}
+	
+	/** Start the Level and play the Game's background music.
+	 * Throws a RuntimeException if the Game is not paused. */
+	@Override
+	public final void resume() {
+//		// If the Game's assets are loaded,
+//		if (loadingState().percentComplete() == 1f)
+//			// Resume the background music.
+//			playBackgroundMusic(true); // True because the background Music should be looped.
+	}
+	
+	@Override
+	public final void dispose() {
+		// Save the Audio's muted-ness.
+		settings.setMuted(audio().isMuted());
+		
+		settings().save();
+		user().save();
+	}
+	
+	@Override
+	public void render() {
+		super.render();
+		
+		final long currentTime = System.currentTimeMillis();
+		this.tweenManager().update(currentTime - lastRenderTime);
+		this.lastRenderTime = currentTime;
+	}
+	
+	@Override
+	public void create() {
+		super.create();
+		
+		if (created)
+			throw new RuntimeException("Game already created!?");
+		
+		initializeFileHandles();
+		initializeAssets();
+		initializeStates();
+		
+		// Set our Game's state to the loading state.
+		setState(loadingState);
+		
+		// Mark the Game as created.
+		created = true;
+		lastRenderTime = System.currentTimeMillis();
+	}
+	
+	public final void openShop() {
+		if (this.applicationState() instanceof ShopState)
+			throw new RuntimeException("Already in ShopState!");
+		
+		setState(shopState());
+	}
+	
+	/** @return the Object that handles all the Game's Tweens. */
+	public final TweenManager tweenManager() {
+		return this.tweenManager;
+	}
+	
+	/** @return the interface for saving User data. */
+	public final User user() {
+		return this.user;
+	}
+	
+	/* @return the interface for Game settings. */
+	public final Settings settings() {
+		return this.settings;
+	}
+	
+	/** @return true if the Game's .create() method has been called. */
+	public final boolean isCreated() {
+		return created;
+	}
+	
+	/** @return the Game's Screen's virtual width. */
+	public final int screenWidth() {
+		return screen().virtualWidth();
+	}
+	
+	/** @return the Game's Screen's virtual height. */
+	public final int screenHeight() {
+		return screen().virtualHeight();
+	}
+	
+	/** @return the center of the Game's virtual screen. */
+	public final Vector2 screenCenter() {
+		return new Vector2(screenWidth()/2, screenHeight()/2);
+	}
+	
+	/** @return the size of the Game's virtual screen. */
+	public final Vector2 screenSize() {
+		return new Vector2(screenWidth(), screenHeight());
+	}
+	
+	/** Initialize the Game's FileHandles. */
+	protected void initializeFileHandles() {
+		PATH_TO_ASSETS = Gdx.files.internal("assets");
+		BACKGROUND_MUSIC_SOURCE = Gdx.files.internal("assets/SFX/BackgroundMusic.mp3");
+	}
+	
+	/** Initialize the Game's AssetManager. */
+	protected void initializeAssets() {
+		// Create our psuedo-random number generator.
+		random = new Random();
+		
+		// Create the Game's AudioProxy.
+		audioProxy = new AudioProxy(assets.manager, this.IS_STRICT);
+		
+		tweenManager = new TweenManager();
+		// Register all the accessors with their respective classes.
+		Tween.registerAccessor(Vector2.class, new Vector2Accessor());
+		Tween.registerAccessor(Graphic.class, new GraphicAccessor());
+		Tween.setWaypointsLimit(2);
+		
+		final int DEFAULT_USER_ID = 0;
+		final Preferences prefs = Gdx.app.getPreferences("prefs");
+		user = new User(DEFAULT_USER_ID, prefs);
+		settings = new Settings(prefs);
+		
+		if (DEVELOPER_MODE) {
+			System.out.println("Warning! Opting into the tutorial!");
+			settings.optIntoTutorial();
+			settings.preferences().putInteger(Settings.LAUNCHES, 0);
+		}
+		
+		// Mute the Audio if it was muted the last time the Game exited.
+		if (settings.isMuted())
+			audio().mute();
+		
+		if (DEVELOPER_MODE) {
+			System.out.println("Warning! In developer mode!");
+			user.setCoinCount(500);
+		}
+		if (RESET_MODE) {
+			for (int i = 0; i != 25; i ++) {
+				if (i < 5)
+					user.buyTurret(i);
+				else
+					user.unBuyTurret(i);
+			}
+			user.setCoinCount(0);
+			user.setHighScore(0);
+			game.settings.preferences().putInteger(Settings.LAUNCHES, 0);
+			game.settings.preferences().flush();
+			user.save();
+		}
+	}
+	
+	/** Initialize the Game's ApplicationStates. */
+	protected void initializeStates() {
+		// Set our LoadingState to exit to our MainMenuState when loading is complete.
+		loadingState().setExitState(mainMenuState());
+		//loadingState().setExitState(new SurvivalLevel(this, LEVEL_WIDTH, LEVEL_HEIGHT));
+	}
+	
+	/** Create the Game's MainMenuState if it has not yet been created and return it. */
+	protected MainMenuState mainMenuState() {
+		// If our Game's MainMenuState has not yet been created,
+		if (this.mainMenuState == null)
+			// Create the state with our Game's AssetManager and Screen.
+			mainMenuState = new MainMenuState(this, screen().virtualWidth(), screen().virtualHeight()) {
+				@Override
+				protected void exitMainMenu() {
+					settings.addLaunch();
+					Game.this.setState(new SurvivalLevel(Game.this, LEVEL_WIDTH, LEVEL_HEIGHT));
+				}
+		};
+		
+		return mainMenuState;
+	}
+	
+	/** Create the Game's LoadingState if it has not yet been created and return it. */
+	protected LoadingState loadingState() {
+		// If our Game's LoadingState has not yet been created,
+		if (this.loadingState == null)
+			// Create our game's loading state with our AssetManager and known path to our assets.
+			loadingState = new LoadingState(this, assets, PATH_TO_ASSETS);
+		
+		return loadingState;
+	}
+	
+	/** Create the Game's ShopState if it has not yet been created and return it. */
+	protected ShopState shopState() {
+		// If our Game's ShopState has not yet been created,
+		if (this.shopState == null) {
+			// Create our game's shop state.
+			shopState = new ShopState(this) { 
+				@Override
+				protected int coins() {
+					return user.coins();
+				}
+				@Override
+				protected boolean trySpendCoins(int coins) {
+					if (user.coins() >= coins) {
+						user.removeCoins(coins);
+						return true;
+					} else
+						return false;
+				}
+				@Override
+				protected void drawBackgroundTo(SpriteBatch batch) {
+					mainMenuState().getBG().renderTo(batch);
+				}
+			};
+		}
+		
+		return shopState;
+	}
+	
+	public static BitmapFont getFont(String fontFile) {
+		return game.loadingState.assetManager().get(fontFile, BitmapFont.class);
+	}
+	
+}

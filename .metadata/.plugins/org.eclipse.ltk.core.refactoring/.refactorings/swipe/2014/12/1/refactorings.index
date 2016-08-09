@@ -1,0 +1,15 @@
+1419726669992	Pull up members to 'OverlayState'
+1419783134257	Rename method 'overlay'
+1419793204123	Delete element
+1419793670045	Move compilation unit
+1419794270184	Rename local variable 'position'
+1419995100807	Pull up members to 'SpinningButton'
+1419999011971	Rename field 'startButton'
+1419999372830	Rename local variable 'g'
+1420048542480	Rename field 'speEReRd'
+1420048874685	Rename local variable 'graphic'
+1420048889561	Rename type 'SpinningGraphic'
+1420048899436	Rename local variable 'graphic'
+1420048931023	Rename field 'graphics'
+1420048942407	Rename field 'numberOfGraphics'
+1420048956079	Rename field 'MAX_GRAPHICS'

@@ -1,0 +1,7 @@
+1416158105798	Rename field 'EXPLOSION_MAGNITUDE'
+1416449597467	Delete element
+1416450165094	Rename field 'time'
+1416450170737	Rename local variable 'deltaTimeSeconds'
+1416585593414	Rename method 'getComponents'
+1416586194126	Rename local variable 'time'
+1416587681982	Delete element

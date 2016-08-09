@@ -1,0 +1,7 @@
+1407694782133	Rename field 'DEFAULT_VOLUME'
+1407696163436	Rename field 'muted'
+1408129944137	Rename type 'State'
+1408132930606	Rename method 'setTileState'
+1408138023062	Delete elements
+1408198644345	Rename local variable 'index'
+1408199508679	Rename field 'activeRow'

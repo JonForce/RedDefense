@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename local variable &apos;rotation&apos; in &apos;com.jbs.framework.rendering.Graphic.drawRotated(...)&apos; to &apos;degrees&apos;&#x0D;&#x0A;- Original project: &apos;framework&apos;&#x0D;&#x0A;- Original element: &apos;com.jbs.framework.rendering.Graphic.drawRotated(SpriteBatch, Texture, Vector2, float).rotation&apos;&#x0D;&#x0A;- Renamed element: &apos;rotation&apos;&#x0D;&#x0A;- Update references to refactored element" description="Rename local variable &apos;rotation&apos;" id="org.eclipse.jdt.ui.rename.local.variable" input="/src&lt;com.jbs.framework.rendering{Graphic.java[Graphic~drawRotated~QSpriteBatch;~QTexture;~QVector2;~F@rotation!6962!6975!6968!6975!F!0!true" name="degrees" references="true" stamp="1424234418180" version="1.0"/>
+</session>

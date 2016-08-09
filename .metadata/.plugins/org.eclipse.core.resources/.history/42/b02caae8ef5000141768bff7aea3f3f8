@@ -1,0 +1,122 @@
+package com.jbs.swipe.states;
+
+import aurelienribon.tweenengine.BaseTween;
+import aurelienribon.tweenengine.Tween;
+import aurelienribon.tweenengine.TweenCallback;
+import aurelienribon.tweenengine.equations.Quad;
+
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.Vector2;
+import com.jbs.framework.control.Application;
+import com.jbs.framework.rendering.Graphic;
+import com.jbs.framework.rendering.ui.Button;
+import com.jbs.swipe.Game;
+import com.jbs.swipe.gui.GraphicAccessor;
+import com.jbs.swipe.tiles.Direction;
+import com.jbs.swipe.tiles.SwipeTile;
+
+public class ArcadeTutorialState extends TutorialState {
+	
+	private static final String[]
+		TIP_SOURCES = new String[] { "assets/GUI/Tutorial/ArcadeMode/Tip0.png", "assets/GUI/Tutorial/ArcadeMode/Tip1.png", "assets/GUI/Tutorial/ArcadeMode/Tip2.png" };
+	private static final String
+		GOT_IT_PRESSED_SOURCE = "assets/GUI/Tutorial/GotItPressed.png",
+		GOT_IT_UNPRESSED_SOURCE = "assets/GUI/Tutorial/GotItUnpressed.png",
+		FINGER_SOURCE = "assets/GUI/Loading/Finger.png";
+	
+	private Graphic[] tips;
+	private Button gotItButton;
+	
+	private SwipeTile demoTile;
+	private Graphic finger;
+	
+	public ArcadeTutorialState(Game game) {
+		super(game);
+	}
+	
+	@Override
+	public void enterState() {
+		System.out.println("Entering ArcadeTutorialState.");
+		
+		tips = new Graphic[3];
+		for (int i = 0; i != tips.length; i ++)
+			tips[i] = new Graphic(game.screenCenter(), game.getTexture(TIP_SOURCES[i]));
+			
+		finger = new Graphic(new Vector2(0,0), game.getTexture(FINGER_SOURCE));
+		
+		gotItButton = new Button(new Vector2(0,0), game.getTexture(GOT_IT_UNPRESSED_SOURCE), game.getTexture(GOT_IT_PRESSED_SOURCE)) {
+			@Override
+			public int x() {
+				return currentTip().x() - texture().getHeight()/2;
+			}
+			@Override
+			public int y() {
+				return currentTip().y() - currentTip().height()/2 + texture().getHeight() - 10;
+			}
+			@Override
+			public void onRelease() {
+				useNextTip();
+			}
+		};
+		
+		buildFirstTipScene();
+	}
+	
+	@Override
+	public void updateApplication(Application app) {
+		super.updateApplication(app);
+		gotItButton.updateWith(app.input);
+	}
+	
+	@Override
+	public void renderTo(SpriteBatch batch) {
+		super.renderTo(batch);
+		if (currentTip() == tips[0])
+			demoTile.renderTo(batch);
+		gotItButton.renderTo(batch);
+		finger.renderTo(batch);
+	}
+	
+	@Override
+	Graphic[] tips() {
+		return tips;
+	}
+	
+	@Override
+	String tutorialName() {
+		return "arcadetutorial";
+	}
+	
+	private void buildFirstTipScene() {
+		final float
+			infinity = 1/0f,
+			timeToSwipe = infinity;
+		demoTile = new SwipeTile(game, timeToSwipe, Direction.LEFT);
+		demoTile.setPosition(game.screenCenter().add(0, 150));
+		
+		tips[0].translate(-tips[0].width()/4, -tips[0].height()/2);
+		
+		finger.setPosition((int) demoTile.x(), (int) demoTile.y());
+		
+		final Tween tween = Tween.to(finger, GraphicAccessor.POSITION_TWEEN, 1000);
+		
+		tween.ease(Quad.OUT)
+		.target(demoTile.x() - 200, demoTile.y())
+		.setCallback(new TweenCallback() {
+			@Override
+			public void onEvent(int type, BaseTween<?> source) {
+				System.out.println("x : " + (float)(Math.cos(demoTile.directionAngle()) * 200f));s
+				demoTile.changeDirection();
+				finger.setPosition((int)demoTile.x(), (int)demoTile.y());
+				Tween.to(finger, GraphicAccessor.POSITION_TWEEN, 1000)
+					.ease(Quad.OUT)
+					.target(demoTile.x() + (float)(Math.cos(demoTile.directionAngle()) * 200f), demoTile.y() + (float)(Math.sin(demoTile.directionAngle()) * 200f))
+					.setCallback(this)
+					.start(game.tweenManager());
+				
+				System.out.println("adsd");
+			}
+		})
+		.start(game.tweenManager());
+	}
+}

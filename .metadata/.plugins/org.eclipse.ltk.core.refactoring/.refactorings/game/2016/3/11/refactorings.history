@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename field &apos;nextWaveStartDelay&apos; in &apos;com.saucy.game.map.entities.enemies.Wave&apos; to &apos;waveStartDelay&apos;&#x0D;&#x0A;- Original project: &apos;game&apos;&#x0D;&#x0A;- Original element: &apos;com.saucy.game.map.entities.enemies.Wave.nextWaveStartDelay&apos;&#x0D;&#x0A;- Renamed element: &apos;com.saucy.game.map.entities.enemies.Wave.waveStartDelay&apos;&#x0D;&#x0A;- Update references to refactored element&#x0D;&#x0A;- Update textual occurrences in comments and strings" delegate="false" deprecate="false" description="Rename field &apos;nextWaveStartDelay&apos;" flags="589830" getter="false" id="org.eclipse.jdt.ui.rename.field" input="/src&lt;com.saucy.game.map.entities.enemies{Wave.java[Wave^nextWaveStartDelay" name="waveStartDelay" references="true" setter="false" stamp="1457375374688" textual="false" version="1.0"/>
+</session>

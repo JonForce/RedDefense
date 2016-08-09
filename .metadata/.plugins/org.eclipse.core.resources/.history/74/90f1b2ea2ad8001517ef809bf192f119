@@ -1,0 +1,46 @@
+package com.saucy.game;
+
+import com.badlogic.gdx.ApplicationListener;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+
+public class Testical implements ApplicationListener {
+	
+	SpriteBatch batch;
+	Texture t;
+	
+	@Override
+	public void create() {
+		batch = new SpriteBatch();
+		t = new Texture(Gdx.files.internal("assets/Flag.png"));
+	}
+
+	@Override
+	public void resize(int width, int height) {
+		
+	}
+
+	@Override
+	public void render() {
+		batch.draw(t, 0, 0);
+	}
+
+	@Override
+	public void pause() {
+		
+	}
+
+	@Override
+	public void resume() {
+		
+	}
+
+	@Override
+	public void dispose() {
+		
+	}
+	
+	
+	
+}

@@ -1,0 +1,17 @@
+1445471575751	Delete elements
+1445473217941	Delete element
+1445516858865	Rename type 'Level'
+1445517445929	Rename type 'GameState'
+1445518888488	Rename field 'assets'
+1445519597954	Rename type 'Entity'
+1445519614487	Rename type 'NullEntity'
+1445524590971	Delete element
+1445524607585	Rename type 'NullCell'
+1445525391199	Rename local variable 'newCell'
+1445525729455	Rename type 'UserCamera'
+1445525737721	Rename field 'camera'
+1445527407047	Rename type 'CameraController'
+1445527463189	Rename field 'cameraController'
+1445529620331	Delete element
+1445529829524	Delete element
+1445565943851	Rename type 'TileSetting'

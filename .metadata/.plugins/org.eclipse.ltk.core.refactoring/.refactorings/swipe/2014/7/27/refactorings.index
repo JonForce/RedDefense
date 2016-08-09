@@ -1,0 +1,10 @@
+1404311988488	Move compilation unit
+1404343160485	Rename local variable 's'
+1404407777284	Rename method 'getDigit'
+1404408007714	Rename field 'digitWidth'
+1404408014845	Rename field 'digitHeight'
+1404497818371	Rename field 'center'
+1404497822639	Rename field 'size'
+1404500972403	Rename field 'r'
+1404582971659	Rename method 'created'
+1404592191470	Rename method 'loadTexturesFrom'

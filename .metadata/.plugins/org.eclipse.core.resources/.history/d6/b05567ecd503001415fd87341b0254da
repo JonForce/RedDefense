@@ -1,0 +1,343 @@
+package com.jbs.swipe.tiles;
+
+import java.util.Random;
+
+import com.badlogic.gdx.assets.AssetManager;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.math.Vector2;
+import com.jbs.framework.io.InputProxy;
+import com.jbs.framework.rendering.Graphic;
+import com.jbs.framework.rendering.Renderable;
+
+public class SwipeTile implements Renderable {
+	
+	public static final float
+		DEFAULT_SWIPE_MAGNITUDE = 70f,
+		DEFAULT_SCALE = 1f;
+	
+	private Graphic tile, arrowCorrect, arrowIncorrect;
+	private Vector2 center;
+	private float
+		startTime, // The nano time that the SwipeTile was constructed
+		timeToSwipe, // The time until the SwipeTile expires
+		requiredSwipeDirection, // The required swipe direction in degrees
+		swipeAngleTolerance = 45, // The tolerated inaccuracy for a swipe
+		requiredSwipeMagnitude; // The required swipe magnitude
+	
+	// State data, used to determine when to trigger events.
+	private boolean
+		wasExpired = false,
+		wasTouched = true;
+	
+	private Swipe currentSwipe;
+	
+	public SwipeTile(Vector2 center, Vector2 swipeRequirement, Texture tileTexture, Texture arrowCorrectTexture, Texture arrowIncorrectTexture, float timeToSwipe) {
+		tile = new Graphic(center, tileTexture);
+		arrowCorrect = new Graphic(center, arrowCorrectTexture);
+		arrowIncorrect = new Graphic(center, arrowIncorrectTexture);
+		
+		this.center = center.cpy();
+		this.timeToSwipe = timeToSwipe;
+		this.requiredSwipeDirection = swipeRequirement.angle();
+		this.requiredSwipeMagnitude = swipeRequirement.len();
+		
+		startTime = System.nanoTime();
+	}
+	
+	public SwipeTile(AssetManager assets, Vector2 center, String tileLocation, float swipeTime, Direction direction) {
+		this(
+				center,
+				SwipeTile.createSwipe(direction, DEFAULT_SWIPE_MAGNITUDE),
+				(Texture) assets.get(tileLocation),
+				(Texture) SwipeTile.getArrow(assets, direction, true),
+				(Texture) SwipeTile.getArrow(assets, direction, false),
+				swipeTime);
+		this.scale(DEFAULT_SCALE);
+	}
+	
+	public SwipeTile(AssetManager assets, Vector2 center, String tileLocation, float swipeTime) {
+		this(assets, center, tileLocation, swipeTime, randomDirection());
+	}
+
+	@Override
+	public void renderTo(SpriteBatch batch) {
+		// First render the background tile to the batch.
+		tile.renderTo(batch);
+		
+		// Next, render the arrow to the batch.
+		if (expired())
+			// If our SwipeTile has expired, render the expired tile.
+			arrowIncorrect.renderTo(batch);
+		else
+			// Else we should render our non-expired arrow.
+			arrowCorrect.renderTo(batch);
+	}
+	
+	public void updateWith(InputProxy input) {
+		if (!expired()) {
+			// Define the touch position as the position of our input.
+			Vector2 touchPosition = positionOf(input);
+			
+			boolean justTouched = (!wasTouched && input.isTouched());
+			
+			// If the input just touched and the touch is within our SwipeTile's bounds,
+			if (justTouched && this.contains(touchPosition)) {
+				final float toleranceDegrees = swipeAngleTolerance;
+				// Create a new Swipe object with an origin of our touchPosition, updated with our input,
+				// and with a maximum length of requiredSwipeMagnitude
+				currentSwipe = new Swipe(touchPosition, input, requiredSwipeMagnitude) {
+					
+					// Listen for the expiration of our Swipe, it expires when the terminal magnitude is met.
+					@Override
+					public void onExpire() {
+						// If the Swipe's angle matches our required angle within the tolerance,
+						if (this.checkAngle(requiredSwipeDirection, toleranceDegrees))
+							onCorrectSwipe(); // Trigger the SwipeTile's onCorrectSwipe event
+						else
+							onIncorrectSwipe(); // Otherwise the swipe was incorrect
+					}
+				};
+			}
+			
+			// If our current swipe is created and has not expired,
+			if (currentSwipe != null && !currentSwipe.expired())
+				currentSwipe.updateExpiration(); // Update the swipe and potentially expire it.
+		}
+		
+		if (expired() && !wasExpired)
+			onExpire();
+		wasExpired = expired();
+		wasTouched = input.isTouched();
+	}
+	
+	public void onExpire() { }
+	public void onCorrectSwipe() { }
+	public void onIncorrectSwipe() { }
+	
+	/*
+	 * Scale the SwipeTile's arrow and background around it's center.
+	 */
+	public void scale(float scalar) {
+		tile.scale(scalar);
+		arrowCorrect.scale(scalar);
+		arrowIncorrect.scale(scalar);
+	}
+	
+	/*
+	 * Scale the SwipeTile's arrow around it's center.
+	 */
+	public void scaleArrow(float scalar) {
+		arrowCorrect.scale(scalar);
+		arrowIncorrect.scale(scalar);
+	}
+	
+	/*
+	 * @return true if the SwipeTile has been created for longer
+	 * then the maximum time to swipe the tile.
+	 */
+	public boolean expired() {
+		return (deltaTime() > timeToSwipe);
+	}
+	
+	/*
+	 * @return true if the point is within the SwipeTile's bounds.
+	 */
+	public boolean contains(Vector2 point) {
+		return boundingBox().contains(point.x, point.y);
+	}
+	
+	protected void onTouch() {
+		
+	}
+	
+	/*
+	 * @return the Rectangle that surrounds the SwipeTile.
+	 */
+	protected Rectangle boundingBox() {
+		return new Rectangle(bottomLeft().x, bottomLeft().y, tile.width(), tile.height());
+	}
+	
+	/*
+	 * @return the bottom left corner of the SwipeTile.
+	 */
+	protected Vector2 bottomLeft() {
+		return new Vector2(center.x - tile.width()/2, center.y - tile.height()/2);
+	}
+	
+	/*
+	 * @return the top right corner of the SwipeTile.
+	 */
+	protected Vector2 topRight() {
+		return new Vector2(center.x + tile.width()/2, center.y + tile.height()/2);
+	}
+	
+	/*
+	 * @return the time since the construction of StartButton.
+	 */
+	protected float deltaTime() {
+		// Return the difference in time since the start time converted to milliseconds.
+		return (System.nanoTime() - startTime) * 1E-6f;
+	}
+	
+	/*
+	 * @return a new Vector2 constructed with the input's x and y screen coordinates.
+	 */
+	protected final Vector2 positionOf(InputProxy input) {
+		return new Vector2(input.getX(), input.getY());
+	}
+	
+	/*
+	 * @return a normalized Vector2 that represents a swipe with a magnitude of
+	 * 'magnitude' and direction of either up, left, right, or down.
+	 */
+	public static Vector2 createSwipe(Direction direction, float magnitude) {
+		if (direction == Direction.RIGHT)
+			return new Vector2(magnitude, 0);
+		else if (direction == Direction.UP)
+			return new Vector2(0, magnitude);
+		else if (direction == Direction.LEFT)
+			return new Vector2(-magnitude, 0);
+		else if (direction == Direction.DOWN)
+			return new Vector2(0, -magnitude);
+		else
+			throw new RuntimeException("Error in SwipeTile.createSwipe : Unknown direction " + direction);
+	}
+	
+	public static Texture getArrow(AssetManager assets, Direction direction, boolean correct) {
+		String header = "assets/GUI/Arrows/";
+		String footer = correct? "Correct.png" : "Incorrect.png";
+		if (direction == Direction.RIGHT)
+			return assets.get(header + "Right/" + footer);
+		else if (direction == Direction.UP)
+			return assets.get(header + "Up/" + footer);
+		else if (direction == Direction.LEFT)
+			return assets.get(header + "Left/" + footer);
+		else if (direction == Direction.DOWN)
+			return assets.get(header + "Down/" + footer);
+		else
+			throw new RuntimeException("Error in SwipeTile.getArrow : Unknown direction " + direction);
+	}
+	
+	/* @return a random Direction object. */
+	public static Direction randomDirection() {
+		int i = new Random().nextInt(5);
+		
+		if (i == 0)
+			return Direction.RIGHT;
+		else if (i == 1)
+			return Direction.UP;
+		else if (i == 2)
+			return Direction.LEFT;
+		else
+			return Direction.DOWN;
+	}
+}
+
+class Swipe {
+	
+	private Vector2 origin;
+	private InputProxy input;
+	private boolean expired = false;
+	private float maxMagnitude;
+	
+	public Swipe(Vector2 origin, InputProxy input, float maxMagnitude) {
+		if (!input.isTouched())
+			throw new RuntimeException("Input is not touched, Swipe cannot be constructed.");
+		if (maxMagnitude <= 0)
+			throw new RuntimeException("maxMagnitude is <= 0, Swipe cannot be constructed.");
+		this.origin = origin;
+		this.input = input;
+		this.maxMagnitude = maxMagnitude;
+	}
+	
+	/*
+	 * Expire the swipe if the input is no longer touched.
+	 */
+	public void updateExpiration() {
+		if ((!input.isTouched() || magnitude() >= maxMagnitude) && !expired())
+			expire();
+	}
+	
+	/*
+	 * Invalidate the swipe.
+	 */
+	public final void expire() {
+		expired = true;
+		onExpire();
+	}
+	
+	public void onExpire() { }
+	
+	/*
+	 * @return true if the Swipe has expired.
+	 */
+	public boolean expired() {
+		return expired;
+	}
+	
+	/*
+	 * @return true if the Swipe's angle is equal to the required angle with
+	 * a tolerance of 'toleranceDegrees'. Check is inclusive.
+	 */
+	public boolean checkAngle(float requiredAngle, float toleranceDegrees) {
+		// The minimum angle of the swipe required to return true.
+		float minimumAngle = requiredAngle - toleranceDegrees;
+		// The maximum angle of the swipe required to return true;
+		float maximumAngle = requiredAngle + toleranceDegrees;
+		float angle = swipeAngle();
+		if (angle > requiredAngle + 180)
+			angle -= (requiredAngle + 360);
+		// Return true when the swipe's angle is greater than the minimum angle
+		// and less than the maximum angle (Inclusively).
+		return angle >= minimumAngle && angle <= maximumAngle;
+	}
+	
+	/*
+	 * @return the angle of the swipe relative to the positive x-axis
+	 * (Counterclockwise) in degrees.
+	 */
+	public float swipeAngle() {
+		return swipe().angle();
+	}
+	
+	/*
+	 * @return the Swipe's magnitude.
+	 */
+	public float magnitude() {
+		return origin.dst(inputPosition());
+	}
+	
+	/*
+	 * @return the Swipe's origin, or start.
+	 */
+	public Vector2 origin() {
+		return origin;
+	}
+	
+	/*
+	 * @return the position of the Swipe's input.
+	 */
+	public Vector2 inputPosition() {
+		return positionOf(input);
+	}
+	
+	protected final Vector2 swipe() {
+		return differenceOf(origin, positionOf(input));
+	}
+	
+	/*
+	 * @return a new Vector2 constructed with the input's x and y screen coordinates.
+	 */
+	protected final Vector2 positionOf(InputProxy input) {
+		return new Vector2(input.getX(), input.getY());
+	}
+	
+	/*
+	 * @return vectorB - vectorA
+	 */
+	protected final Vector2 differenceOf(Vector2 vectorA, Vector2 vectorB) {
+		return new Vector2(vectorB.x - vectorA.x, vectorB.y - vectorA.y);
+	}
+}
